@@ -36,5 +36,25 @@ namespace Huffman
                 Console.WriteLine("Symbol '{0}' has code '{1}'", kvp.Key, kvp.Value);
             }
         }
+        
+        public string GetSymbolCodeTable()
+        {
+            string table = "";
+            foreach (KeyValuePair<char, string> kvp in symbolCodeTable)
+            {
+                table += kvp.Key;
+                table += "=";
+                table += kvp.Value;
+                table += "$";
+            }
+
+            table += ";";
+            return table;
+        }
+
+        public Dictionary<char, string> GetDic()
+        {
+            return this.symbolCodeTable;
+        }
     }
 }
