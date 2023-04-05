@@ -11,8 +11,8 @@ namespace Huffman
             // Specify the path of the text file to read
             string filePath = "Poem.txt";
 
-            // Create a new dictionary to store the characters and their counts
-            Dictionary<char, int> charCounts = new Dictionary<char, int>();
+            // Create a list of nodes to store the characters and their counts
+            List<Node> nodes = new List<Node>();
 
             // Read the text file
             using (StreamReader sr = new StreamReader(filePath))
@@ -23,82 +23,89 @@ namespace Huffman
                     // Loop through each character in the line
                     foreach (char c in line)
                     {
-                        if (charCounts.ContainsKey(c))
+                        Node node = nodes.Find(n => n.Character == c);
+                        if (node != null)
                         {
-                            charCounts[c]++;
+                            node.Frequency++;
                         }
                         else
                         {
-                            charCounts.Add(c, 1);
+                            nodes.Add(new Node(c, 1));
                         }
                     }
                 }
             }
-            
-            // Create an array to store the key-value pairs from the dictionary
-            KeyValuePair<char, int>[] charArray = charCounts.ToArray();
-            
-            BuildMaxHeap(charArray);
 
-            // Print out the max heap
-            int x = 1;
-            int y = 1;
-            foreach (KeyValuePair<char, int> kvp in charArray)
+            // Build the Huffman tree
+            Node root = BuildHuffmanTree(nodes);
+
+            // Print out the character frequencies
+            PrintCharacterFrequencies(root);
+            Encoding huffmanEncoding = new Encoding(root);
+            huffmanEncoding.DisplaySymbolCodeTable();
+
+        }
+
+        static Node BuildHuffmanTree(List<Node> nodes)
+        {
+            // Build a binary heap to store the nodes based on their frequency
+            BinaryHeap<Node> heap = new BinaryHeap<Node>(nodes.Count, new NodeComparer());
+
+            foreach (Node node in nodes)
             {
-                Console.WriteLine("Character '{0}' appears {1} times in the text file.", kvp.Key, kvp.Value);
-                
-                
-                Console.WriteLine(kvp.Key);
-                if (y == 0)
+                heap.Insert(node);
+            }
+
+            // Combine the nodes with the lowest frequency until there is only one node left (the root of the tree)
+            while (heap.Count > 1)
+            {
+                Node left = heap.ExtractMin();
+                Node right = heap.ExtractMin();
+                Node parent = new Node('\0', left.Frequency + right.Frequency);
+                parent.Left = left;
+                parent.Right = right;
+                heap.Insert(parent);
+            }
+
+            // The last node in the heap is the root of the Huffman tree
+            return heap.ExtractMin();
+        }
+
+        static void PrintCharacterFrequencies(Node root)
+        {
+            // Traverse the tree in depth-first order and print out the character frequencies
+            Stack<Node> stack = new Stack<Node>();
+            stack.Push(root);
+            while (stack.Count > 0)
+            {
+                Node node = stack.Pop();
+                if (node.Character != '\0')
                 {
-                    x *= 2;
-                    y = x;
-                    Console.WriteLine();
+                    Console.WriteLine("Character '{0}' appears {1} times in the text file.", node.Character,
+                        node.Frequency);
                 }
-                y -= 1;
-                
-            }
-        }
-        static void BuildMaxHeap(KeyValuePair<char, int>[] array)
-        {
-            // Start at the parent of the last leaf node
-            int startIndex = (array.Length - 2) / 2;
-            
-            for (int i = startIndex; i >= 0; i--)
-            {
-                HeapifyDown(array, i);
-            }
-        }
 
-        static void HeapifyDown(KeyValuePair<char, int>[] array, int index)
-        {
-            int leftChildIndex = (2 * index) + 1;
-            int rightChildIndex = (2 * index) + 2;
-            int largestIndex = index;
+                if (node.Right != null)
+                {
+                    stack.Push(node.Right);
+                }
 
-            // Compare the parent node to its left child
-            if (leftChildIndex < array.Length && array[leftChildIndex].Value > array[largestIndex].Value)
-            {
-                largestIndex = leftChildIndex;
-            }
-
-            // Compare the parent node to its right child
-            if (rightChildIndex < array.Length && array[rightChildIndex].Value > array[largestIndex].Value)
-            {
-                largestIndex = rightChildIndex;
-            }
-
-            // If the parent node is not the largest, swap it with the largest child
-            if (largestIndex != index)
-            {
-                Swap(array, index, largestIndex);
-                HeapifyDown(array, largestIndex);
+                if (node.Left != null)
+                {
+                    stack.Push(node.Left);
+                }
             }
         }
 
-        static void Swap(KeyValuePair<char, int>[] array, int i, int j)
+        public class NodeComparer : IComparer<Node>
         {
-            (array[i], array[j]) = (array[j], array[i]);
+            public int Compare(Node x, Node y)
+            {
+                return x.Frequency.CompareTo(y.Frequency);
+            }
         }
     }
+
+    
 }
+
