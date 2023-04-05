@@ -41,6 +41,8 @@ namespace Huffman
 
             // Print out the character frequencies
             PrintCharacterFrequencies(root);
+            
+            //Print Coding Table
             Encoding huffmanEncoding = new Encoding(root);
             huffmanEncoding.DisplaySymbolCodeTable();
 
