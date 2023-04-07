@@ -62,7 +62,7 @@ public class BinaryHeap<T>
             if (_count > 0)
             {
                 T lastElement = _elements[_count];
-                _elements[0] = lastElement; // Place the last element at the top (root) of the heap
+                _elements[0] = lastElement; // Place the last element at the top of the heap
 
                 // Call Heapify to maintain the min-heap property
                 Heapify(0);

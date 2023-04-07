@@ -8,9 +8,9 @@ namespace Huffman
     {
         public static void Main()
         {
-            // Specify the path of the text file to read
+            
             string filePath = "Poem.txt";
-            // string filePath = "test.txt";
+            
 
             // Create a list of nodes to store the characters and their counts
             List<Node> nodes = new List<Node>();
