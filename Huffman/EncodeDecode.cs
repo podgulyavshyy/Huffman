@@ -7,9 +7,15 @@ namespace Huffman
     {
         private string outFile = "output.bin";
         private string outDecodeFile = "outputDecode.txt";
+        public Dictionary<string, char> encodeDic = new Dictionary<string, char>();
 
         public void Encode(Dictionary<char, string> dictionary, string table, string filePath)
         {
+            foreach (var pair in dictionary)
+            {
+                this.encodeDic.Add(pair.Value, pair.Key);
+            }
+            
             using (StreamReader sr = new StreamReader(filePath))
             {
                 string line;
@@ -68,13 +74,13 @@ namespace Huffman
         {
             Dictionary<string, char> decodeDictionary = new Dictionary<string, char>();
 
-            using (BinaryReader br = new BinaryReader(File.Open(outFile, FileMode.Open)))
+            /*using (BinaryReader br = new BinaryReader(File.Open(outFile, FileMode.Open)))
             {
                 string codes = br.ReadString();
-                string[] codesArr = codes.Split(';');
+                string[] codesArr = codes.Split('$');
                 foreach (var pair in codesArr)
                 {
-                    string[] splittedPair = pair.Split('$');
+                    string[] splittedPair = pair.Split('=');
                     if (splittedPair.Length != 2)
                     {
                         continue;
@@ -90,11 +96,7 @@ namespace Huffman
                     byte currentByte = br.ReadByte();
 
                     // Read the number of bits in the last byte if this is the last byte
-                    int numBitsToProcess = 8;
-                    if (br.BaseStream.Position == br.BaseStream.Length - 1)
-                    {
-                        numBitsToProcess = br.ReadByte();
-                    }
+                    int numBitsToProcess = currentByte;
 
                     // Convert the byte to a list of bools
                     List<bool> bitList = new List<bool>();
@@ -117,7 +119,30 @@ namespace Huffman
 
                     File.AppendAllText(outDecodeFile, currLine + Environment.NewLine);
                 }
+            }*/
+            byte[] fileBytes = File.ReadAllBytes(outFile);
+            // StringBuilder sb = new StringBuilder();
+            string test = "";
+            string output = "";
+
+            foreach(byte b in fileBytes)
+            {
+                test += Convert.ToString(b, 2).PadLeft(8, '0');  
             }
+
+            string currString = "";
+            foreach (var key in test)
+            {
+                if (encodeDic.ContainsKey(currString))
+                {
+                    output += encodeDic[currString];
+                    currString = "";
+                }
+
+                currString += key;
+            }
+
+            File.WriteAllText(outDecodeFile, output);
         }
 
     }
