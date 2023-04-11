@@ -16,56 +16,56 @@ namespace Huffman
             // Save the code table in a separate .txt file
             File.WriteAllText(outTableFile, table);
 
-            using (StreamReader sr = new StreamReader(filePath))
+            string inputText = File.ReadAllText(filePath);
+
+            using (BinaryWriter bw = new BinaryWriter(File.Open(outFile, FileMode.Create)))
             {
-                string line;
-                using (BinaryWriter bw = new BinaryWriter(File.Open(outFile, FileMode.Create)))
+                string encodedText = "";
+                foreach (char c in inputText)
                 {
-                    while ((line = sr.ReadLine()) != null)
+                    encodedText += dictionary[c];
+                }
+
+                // Add the newline character (\n) to the end of the text
+                encodedText += dictionary['\n'];
+
+                // Convert the Huffman code string to a list of bools
+                List<bool> bitList = new List<bool>();
+                foreach (char bitChar in encodedText)
+                {
+                    bitList.Add(bitChar == '1');
+                }
+
+                // Write the number of bits to the binary file
+                bw.Write((byte)bitList.Count);
+
+                // Pack the bools into a byte and write it to the binary file
+                byte currentByte = 0;
+                int bitPosition = 0;
+
+                foreach (bool bit in bitList)
+                {
+                    currentByte |= (byte)((bit ? 1 : 0) << (7 - bitPosition));
+                    bitPosition++;
+
+                    if (bitPosition == 8)
                     {
-                        string currLine = "";
-                        foreach (char c in line)
-                        {
-                            currLine += dictionary[c];
-                        }
-
-                        // Convert the Huffman code string to a list of bools
-                        List<bool> bitList = new List<bool>();
-                        foreach (char bitChar in currLine)
-                        {
-                            bitList.Add(bitChar == '1');
-                        }
-
-                        // Write the number of bits to the binary file
-                        bw.Write((byte)bitList.Count);
-
-                        // Pack the bools into a byte and write it to the binary file
-                        byte currentByte = 0;
-                        int bitPosition = 0;
-
-                        foreach (bool bit in bitList)
-                        {
-                            currentByte |= (byte)((bit ? 1 : 0) << (7 - bitPosition));
-                            bitPosition++;
-
-                            if (bitPosition == 8)
-                            {
-                                bw.Write(currentByte);
-                                currentByte = 0;
-                                bitPosition = 0;
-                            }
-                        }
-
-                        // If there are any remaining bits, write them to the binary file
-                        if (bitPosition > 0)
-                        {
-                            bw.Write(currentByte);
-                        }
+                        bw.Write(currentByte);
+                        currentByte = 0;
+                        bitPosition = 0;
                     }
+                }
+
+                // If there are any remaining bits, write them to the binary file
+                if (bitPosition > 0)
+                {
+                    bw.Write(currentByte);
                 }
             }
         }
 
+
+        
         public void DecodeVerTwo()
         {
             Dictionary<string, char> decodeDictionary = new Dictionary<string, char>();
@@ -76,40 +76,67 @@ namespace Huffman
                 while ((line = sr.ReadLine()) != null)
                 {
                     string[] splittedPair = line.Split('=');
-                    if (splittedPair.Length != 2)
+
+                    if (line.StartsWith("="))
+                    {
+                        string huffmanCode = line.Substring(1);
+                        decodeDictionary[huffmanCode] = '\n';
+                    }
+                    else if (splittedPair.Length != 2)
                     {
                         continue;
                     }
-                    decodeDictionary[splittedPair[1]] = char.Parse(splittedPair[0]);
+                    else
+                    {
+                        decodeDictionary[splittedPair[1]] = char.Parse(splittedPair[0]);
+                    }
                 }
             }
 
-            using (BinaryReader br = new BinaryReader(File.Open(outFile, FileMode.Open)))
+            byte[] encodedBytes = File.ReadAllBytes(outFile);
+            StringBuilder sb = new StringBuilder();
+            string code = "";
+            int bytePosition = 0;
+            int bitPosition = 0;
+            while (bytePosition < encodedBytes.Length)
             {
-                StringBuilder sb = new StringBuilder();
-                string code = "";
-                while (br.BaseStream.Position < br.BaseStream.Length)
+                int bitsToRead = encodedBytes[bytePosition];
+                bytePosition++;
+
+                while (bitPosition < bitsToRead )
                 {
-                    int bitsToRead = br.ReadByte();
-                    // Check if the end of the stream has been reached
-                    if (br.BaseStream.Position >= br.BaseStream.Length)
+                    if (bytePosition == encodedBytes.Length)
                     {
                         break;
                     }
-                    byte currentByte = br.ReadByte();
-                    for (int i = 0; i < bitsToRead; i++)
+                    code += ((encodedBytes[bytePosition] & (1 << (7 - bitPosition))) != 0) ? "1" : "0";
+                    bitPosition++;
+
+                    if (decodeDictionary.ContainsKey(code))
                     {
-                        code += ((currentByte & (1 << (7 - i))) != 0) ? "1" : "0";
-                        if (decodeDictionary.ContainsKey(code))
+                        char decodedChar = decodeDictionary[code];
+                        sb.Append(decodedChar);
+                        code = "";
+
+                        // If newline character is encountered, skip the remaining bits in the current byte
+                        if (decodedChar == '\n')
                         {
-                            sb.Append(decodeDictionary[code]);
-                            code = "";
+                            bitPosition = 0;
+                            bytePosition++;
+                            break;
                         }
                     }
-                }
 
-                File.WriteAllText(outDecodeFile, sb.ToString());
+                    if (bitPosition == 8)
+                    {
+                        bitPosition = 0;
+                        bytePosition++;
+                    }
+                }
             }
+            File.WriteAllText(outDecodeFile, sb.ToString());
         }
+
+
     }
 }

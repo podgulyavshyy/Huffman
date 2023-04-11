@@ -8,19 +8,19 @@ namespace Huffman
     {
         public static void Main()
         {
-            
             string filePath = "Poem.txt";
-            
 
             // Create a list of nodes to store the characters and their counts
             List<Node> nodes = new List<Node>();
 
             // Read the text file
+            int lineCount = 0;
             using (StreamReader sr = new StreamReader(filePath))
             {
                 string line;
                 while ((line = sr.ReadLine()) != null)
                 {
+                    lineCount++;
                     // Loop through each character in the line
                     foreach (char c in line)
                     {
@@ -37,23 +37,26 @@ namespace Huffman
                 }
             }
 
+            // Add the newline character (\n) and its frequency (lineCount - 1) to the nodes list
+            nodes.Add(new Node('\n', lineCount - 1));
+
             // Build the Huffman tree
             Node root = BuildHuffmanTree(nodes);
 
             // Print out the character frequencies
             PrintCharacterFrequencies(root);
-            
-            //Print Coding Table
+
+            // Print Coding Table
             Encoding huffmanEncoding = new Encoding(root);
             huffmanEncoding.DisplaySymbolCodeTable();
-            
-            //encode
+
+            // Encode
             EncodeDecode endecoder = new EncodeDecode();
             endecoder.Encode(huffmanEncoding.GetDic(), huffmanEncoding.GetSymbolCodeTable(), filePath);
             //endecoder.Decode(huffmanEncoding.GetDic());
             endecoder.DecodeVerTwo();
-
         }
+
 
         static Node BuildHuffmanTree(List<Node> nodes)
         {
