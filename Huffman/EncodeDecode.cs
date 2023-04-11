@@ -25,9 +25,7 @@ namespace Huffman
                 {
                     encodedText += dictionary[c];
                 }
-
-                // Add the newline character (\n) to the end of the text
-                encodedText += dictionary['\n'];
+                
 
                 // Convert the Huffman code string to a list of bools
                 List<bool> bitList = new List<bool>();
@@ -117,14 +115,6 @@ namespace Huffman
                         char decodedChar = decodeDictionary[code];
                         sb.Append(decodedChar);
                         code = "";
-
-                        // If newline character is encountered, skip the remaining bits in the current byte
-                        if (decodedChar == '\n')
-                        {
-                            bitPosition = 0;
-                            bytePosition++;
-                            break;
-                        }
                     }
 
                     if (bitPosition == 8)
