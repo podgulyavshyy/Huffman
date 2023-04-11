@@ -45,12 +45,12 @@ namespace Huffman
                 table += kvp.Key;
                 table += "=";
                 table += kvp.Value;
-                table += "$";
+                table += Environment.NewLine;
             }
 
-            table += ";";
             return table;
         }
+
 
         public Dictionary<char, string> GetDic()
         {
